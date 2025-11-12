@@ -3,7 +3,7 @@ import { AnimalService } from '../../services/animal-service';
 import { take } from 'rxjs';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { FormBuilder, FormGroup, ReactiveFormsModule} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -15,6 +15,10 @@ import { CommonModule } from '@angular/common';
 export class AnimalComponent {
   animalList: any = [];
   animalForm: FormGroup | any;
+  idAnimal: any;
+  editableAnimal: boolean = false;
+
+
 
   constructor(private animalService: AnimalService,
     private formBuilder: FormBuilder,
@@ -56,6 +60,57 @@ export class AnimalComponent {
       }
     );
   }
+
+  updateAnimalEntry() {
+    //Removiendo valores vacios del formulario de actualización
+    const updateData: any = {};
+    for (let key in this.animalForm.value) {
+      if (this.animalForm.value[key] !== '' && this.animalForm.value[key] !== null) {
+        updateData[key] = this.animalForm.value[key];
+      }
+    }
+    this.animalService.updateAnimal(this.idAnimal, updateData).subscribe(
+      () => {
+        this.newMessage("Animal editado");
+        this.getAllAnimals(); // Agregar esto para refrescar
+      }
+    );
+  }
+
+  toggleEditAnimal(id: any) {
+    this.idAnimal = id;
+    console.log(this.idAnimal)
+    this.animalService.getOneAnimal(id).subscribe(
+      data => {
+        this.animalForm.patchValue({
+          nombre: data.nombre,
+          edad: data.edad,
+          tipo: data.tipo,
+        });
+      }
+    );
+    this.editableAnimal = !this.editableAnimal;
+  }
+
+deleteAnimalEntry(id: any) {
+  if (!confirm('¿Estás seguro de eliminar este animal?')) {
+    return;
+  }
+  
+  console.log(id);
+  this.animalService.deleteAnimal(id).subscribe(
+    () => {
+      this.toastr.success('Animal eliminado exitosamente');
+      this.getAllAnimals();
+    },
+    (error) => {
+      console.error('Error al eliminar el animal:', error);
+      this.toastr.error('Error al eliminar el animal', 'Error');
+    }
+  );
+}
+
+
 
 
 
